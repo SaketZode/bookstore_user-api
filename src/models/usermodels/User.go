@@ -73,3 +73,24 @@ func (u *User) FetchUser() (err *errors.RestError) {
 
 	return nil
 }
+
+func (u *User) Update() (err *errors.RestError) {
+	updateUserQuery := `UPDATE users SET first_name=$1, last_name=$2, age=$3, email=$4 WHERE id=$5`
+
+	dbclient := postgres.Client
+	stmt, prepareQueryErr := dbclient.Prepare(updateUserQuery)
+	if prepareQueryErr != nil {
+		fmt.Println("Error while prepare update user query:", prepareQueryErr)
+		return errors.NewInternalServerError("Something went wrong while updating user!")
+	}
+
+	defer stmt.Close()
+
+	_, updateErr := stmt.Exec(u.FirstName, u.LastName, u.Age, u.Email, u.UserId)
+	if updateErr != nil {
+		fmt.Println("Error while executing update user query:", updateErr)
+		return errors.NewInternalServerError("Unexpected error occurred while updating user!")
+	}
+
+	return nil
+}

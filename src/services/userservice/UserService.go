@@ -37,3 +37,24 @@ func (userservice UserService) GetUser(id int) (user *usermodels.User, err *erro
 	}
 	return user, nil
 }
+
+func (userservice UserService) UpdateUser(isPartialUpdate bool, newuser usermodels.User) (user *usermodels.User, err *errors.RestError) {
+	currentuser, getErr := userservice.GetUser(newuser.UserId)
+	if getErr != nil {
+		return nil, getErr
+	}
+
+	if isPartialUpdate {
+
+	} else {
+		currentuser.FirstName = newuser.FirstName
+		currentuser.LastName = newuser.LastName
+		currentuser.Email = newuser.Email
+		currentuser.Age = newuser.Age
+	}
+	updateErr := currentuser.Update()
+	if updateErr != nil {
+		return nil, updateErr
+	}
+	return currentuser, nil
+}
