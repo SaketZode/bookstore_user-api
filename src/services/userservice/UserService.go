@@ -12,7 +12,7 @@ func New() *UserService {
 	return &UserService{}
 }
 
-func (userservice UserService) CreateUser(user *usermodels.User) (*usermodels.User, *errors.RestError) {
+func (userservice *UserService) CreateUser(user *usermodels.User) (*usermodels.User, *errors.RestError) {
 	validationErr := user.Validate()
 	if validationErr != nil {
 		return nil, validationErr
@@ -25,11 +25,11 @@ func (userservice UserService) CreateUser(user *usermodels.User) (*usermodels.Us
 	return user, nil
 }
 
-func (userservice UserService) GetAllUsers() (userlist []usermodels.User, err *errors.RestError) {
+func (userservice *UserService) GetAllUsers() (userlist []usermodels.User, err *errors.RestError) {
 	return userlist, nil
 }
 
-func (userservice UserService) GetUser(id int) (user *usermodels.User, err *errors.RestError) {
+func (userservice *UserService) GetUser(id int) (user *usermodels.User, err *errors.RestError) {
 	user = &usermodels.User{UserId: id}
 	fetchErr := user.FetchUser()
 	if fetchErr != nil {
@@ -38,7 +38,7 @@ func (userservice UserService) GetUser(id int) (user *usermodels.User, err *erro
 	return user, nil
 }
 
-func (userservice UserService) UpdateUser(isPartialUpdate bool, newuser usermodels.User) (user *usermodels.User, err *errors.RestError) {
+func (userservice *UserService) UpdateUser(isPartialUpdate bool, newuser usermodels.User) (user *usermodels.User, err *errors.RestError) {
 	currentuser, getErr := userservice.GetUser(newuser.UserId)
 	if getErr != nil {
 		return nil, getErr
@@ -52,9 +52,20 @@ func (userservice UserService) UpdateUser(isPartialUpdate bool, newuser usermode
 		currentuser.Email = newuser.Email
 		currentuser.Age = newuser.Age
 	}
+
 	updateErr := currentuser.Update()
+
 	if updateErr != nil {
 		return nil, updateErr
 	}
+
 	return currentuser, nil
+}
+
+func (userservice *UserService) DeleteUser(userId int) (err *errors.RestError) {
+	curruser, err := userservice.GetUser(userId)
+	if err != nil {
+		return err
+	}
+	return curruser.Delete()
 }

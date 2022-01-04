@@ -1,6 +1,7 @@
 package usercontroller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -20,7 +21,17 @@ func New() *UserController {
 
 var userservices = userservice.New()
 
-func (usercontroller UserController) CreateUser(c *gin.Context) {
+func parseUserID(param string) (int, *errors.RestError) {
+	id, err := strconv.ParseInt(param, 10, 32)
+	if err != nil {
+		fmt.Println("Error while parsing user ID:", err)
+		return 0, errors.NewBadRequestError("Please provide valid user ID :-|")
+	}
+
+	return int(id), nil
+}
+
+func (usercontroller *UserController) CreateUser(c *gin.Context) {
 	var user = usermodels.New()
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
@@ -37,38 +48,39 @@ func (usercontroller UserController) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, result)
 }
 
-func (usercontroller UserController) GetUsers(c *gin.Context) {
+func (usercontroller *UserController) GetUsers(c *gin.Context) {
 	result, uErr := userservices.GetAllUsers()
+
 	if uErr != nil {
 		c.JSON(uErr.StatusCode, uErr)
 		return
 	}
+
 	c.JSON(http.StatusAccepted, result)
 }
 
-func (usercontroller UserController) GetUserById(c *gin.Context) {
-	userid := c.Param("user_id")
-	id, err := strconv.ParseInt(userid, 10, 32)
-	if err != nil {
-		perror := errors.NewBadRequestError("please pass valid user id :-|")
-		c.JSON(perror.StatusCode, perror)
+func (usercontroller *UserController) GetUserById(c *gin.Context) {
+	userId, parseErr := parseUserID(c.Param("user_id"))
+
+	if parseErr != nil {
+		c.JSON(parseErr.StatusCode, parseErr)
 		return
 	}
-	user, fetchError := userservices.GetUser(int(id))
+
+	user, fetchError := userservices.GetUser(userId)
 	if fetchError != nil {
 		c.JSON(fetchError.StatusCode, fetchError)
 		return
 	}
+
 	c.JSON(http.StatusOK, user)
 }
 
-func (usercontroller UserController) UpdateUser(c *gin.Context) {
-	userid := c.Param("user_id")
+func (usercontroller *UserController) UpdateUser(c *gin.Context) {
+	userId, parseErr := parseUserID(c.Param("user_id"))
 
-	userId, err := strconv.ParseInt(userid, 10, 32)
-	if err != nil {
-		httpErr := errors.NewBadRequestError("please pass valid user ID :-|")
-		c.JSON(httpErr.StatusCode, httpErr)
+	if parseErr != nil {
+		c.JSON(parseErr.StatusCode, parseErr)
 		return
 	}
 
@@ -95,6 +107,16 @@ func (usercontroller UserController) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (usercontroller UserController) DeleteUser(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "DeleteUser Functionality not implemented!!")
+func (usercontroller *UserController) DeleteUser(c *gin.Context) {
+	userID, parseError := parseUserID(c.Param("user_id"))
+	if parseError != nil {
+		c.JSON(parseError.StatusCode, parseError)
+		return
+	}
+	delErr := userservices.DeleteUser(userID)
+	if delErr != nil {
+		c.JSON(delErr.StatusCode, delErr)
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
 }

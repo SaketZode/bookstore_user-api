@@ -37,6 +37,7 @@ func (u *User) Save() (err *errors.RestError) {
 	insertUserQuery := `INSERT INTO users (first_name, last_name, age, email, date_created) VALUES ($1, $2, $3, $4, $5)`
 
 	dbclient := postgres.Client
+
 	stmt, queryStmtErr := dbclient.Prepare(insertUserQuery)
 	if queryStmtErr != nil {
 		return errors.NewInternalServerError("Failed to create query statement!")
@@ -57,6 +58,7 @@ func (u *User) FetchUser() (err *errors.RestError) {
 	getUserQuery := `SELECT id, first_name, last_name, age, email, date_created FROM users WHERE id=$1`
 
 	dbclient := postgres.Client
+
 	stmt, prepareQueryStmtErr := dbclient.Prepare(getUserQuery)
 	if prepareQueryStmtErr != nil {
 		fmt.Println("Error while preparing statement for fetching user:", prepareQueryStmtErr)
@@ -78,6 +80,7 @@ func (u *User) Update() (err *errors.RestError) {
 	updateUserQuery := `UPDATE users SET first_name=$1, last_name=$2, age=$3, email=$4 WHERE id=$5`
 
 	dbclient := postgres.Client
+
 	stmt, prepareQueryErr := dbclient.Prepare(updateUserQuery)
 	if prepareQueryErr != nil {
 		fmt.Println("Error while prepare update user query:", prepareQueryErr)
@@ -90,6 +93,28 @@ func (u *User) Update() (err *errors.RestError) {
 	if updateErr != nil {
 		fmt.Println("Error while executing update user query:", updateErr)
 		return errors.NewInternalServerError("Unexpected error occurred while updating user!")
+	}
+
+	return nil
+}
+
+func (u *User) Delete() (err *errors.RestError) {
+	deleteUserQuery := `DELETE FROM users WHERE id=$1`
+
+	dbclient := postgres.Client
+
+	stmt, prepQueryErr := dbclient.Prepare(deleteUserQuery)
+	if prepQueryErr != nil {
+		fmt.Println("Error while preparing delete user query:", prepQueryErr)
+		return errors.NewInternalServerError("Something went wrong while deleting user!")
+	}
+
+	defer stmt.Close()
+
+	_, delErr := stmt.Exec(u.UserId)
+	if delErr != nil {
+		fmt.Println("Error while executing delete query:", delErr)
+		return errors.NewInternalServerError("Unexpected error occurred while deleting user!")
 	}
 
 	return nil
