@@ -10,6 +10,7 @@ func mapUrls() {
 	usercontroller := usercontroller.New()
 
 	router.GET("/ping", pingcontroller.Ping)
+	router.GET("/users", usercontroller.GetUsers)
 	router.GET("/users/:user_id", usercontroller.GetUserById)
 	router.POST("/users", usercontroller.CreateUser)
 	router.PUT("/users/:user_id", usercontroller.UpdateUser)

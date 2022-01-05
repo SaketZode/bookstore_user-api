@@ -54,6 +54,43 @@ func (u *User) Save() (err *errors.RestError) {
 	return nil
 }
 
+func (u *User) GetAllUsers() ([]User, *errors.RestError) {
+	getAllUsersQuery := `SELECT id, first_name, last_name, age, email, date_created FROM users`
+
+	dbclient := postgres.Client
+
+	stmt, prepareQueryErr := dbclient.Prepare(getAllUsersQuery)
+	if prepareQueryErr != nil {
+		fmt.Println("Error while preparing getAllUsersQuery:", prepareQueryErr)
+		return nil, errors.NewInternalServerError("Something went wrong while fetching users!")
+	}
+
+	defer stmt.Close()
+
+	rows, queryExecErr := stmt.Query()
+	if queryExecErr != nil {
+		fmt.Println("Error while executing getAllUsersQuery:", queryExecErr)
+		return nil, errors.NewInternalServerError("Unexpected error in fetching users list!")
+	}
+
+	defer rows.Close()
+
+	resultset := make([]User, 0)
+	for rows.Next() {
+		var user User
+		scanErr := rows.Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Age, &user.Email, &user.DateCreated)
+		if scanErr != nil {
+			fmt.Println("Error while scanning db rows:", scanErr)
+			return nil, errors.NewInternalServerError("Unexpected error in fetching users list!")
+		}
+		resultset = append(resultset, user)
+	}
+	if len(resultset) == 0 {
+		return nil, errors.NewNotFoundError("No users found!")
+	}
+	return resultset, nil
+}
+
 func (u *User) FetchUser() (err *errors.RestError) {
 	getUserQuery := `SELECT id, first_name, last_name, age, email, date_created FROM users WHERE id=$1`
 

@@ -26,7 +26,12 @@ func (userservice *UserService) CreateUser(user *usermodels.User) (*usermodels.U
 }
 
 func (userservice *UserService) GetAllUsers() (userlist []usermodels.User, err *errors.RestError) {
-	return userlist, nil
+	user := usermodels.User{}
+	users, fetchErr := user.GetAllUsers()
+	if fetchErr != nil {
+		return nil, fetchErr
+	}
+	return users, nil
 }
 
 func (userservice *UserService) GetUser(id int) (user *usermodels.User, err *errors.RestError) {

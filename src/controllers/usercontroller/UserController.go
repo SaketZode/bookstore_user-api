@@ -56,7 +56,7 @@ func (usercontroller *UserController) GetUsers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, result)
+	c.JSON(http.StatusOK, result)
 }
 
 func (usercontroller *UserController) GetUserById(c *gin.Context) {
